@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
@@ -698,11 +697,16 @@ class _ReviewLabScreenState extends State<ReviewLabScreen> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ),
+          if (_isLoadingMeta)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: LinearProgressIndicator(),
+            ),
           const SizedBox(height: 14),
           Text('Official Adobe Category:', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           DropdownButtonFormField<String>(
-            value: _selectedCategory,
+            initialValue: _selectedCategory,
             items: AdobeCategories.list.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13)))).toList(),
             onChanged: (val) {
               if (val != null) setState(() => _selectedCategory = val);
