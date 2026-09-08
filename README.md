@@ -18,9 +18,7 @@
 
 ## 📖 Overview
 
-<img width="576" height="1280" alt="photo_2026-09-08_18-27-32" src="https://github.com/user-attachments/assets/56ba14db-0495-4518-921c-70e1d170e235" />
-<img width="576" height="1280" alt="photo_2026-09-08_18-27-56" src="https://github.com/user-attachments/assets/d5156f65-09c4-4ff1-837b-15e7080fde9d" />
-<img width="576" height="1280" alt="photo_2026-09-08_18-27-59" src="https://github.com/user-attachments/assets/88e876ff-5a4a-4e38-b908-2171607e8e6d" />
+<img width="215" height="450" alt="photo_2026-09-08_18-27-32" src="https://github.com/user-attachments/assets/56ba14db-0495-4518-921c-70e1d170e235" /><img width="215" height="450" alt="photo_2026-09-08_18-27-56" src="https://github.com/user-attachments/assets/d5156f65-09c4-4ff1-837b-15e7080fde9d" /><img width="215" height="450" alt="photo_2026-09-08_18-27-59" src="https://github.com/user-attachments/assets/88e876ff-5a4a-4e38-b908-2171607e8e6d" />
 
 **StockCraft** is an end-to-end companion tool engineered for microstock contributors, designers, and prompt artists selling stock photos and illustrations on **Adobe Stock**, Shutterstock, and Freepik.
 
