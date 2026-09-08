@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/constants/adobe_categories.dart';
 import '../../inspector/models/defect_report.dart';
@@ -27,7 +27,10 @@ class GeminiService {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
-  static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  // Gemini 3.7 Flash — latest stable model for text generation & multimodal vision.
+  // (gemini-2.0-flash was deprecated in June 2026.)
+  static const String _baseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent';
 
   /// Generates prompt suggestions tailored to Adobe Stock high-commercial-value niches
   Future<List<String>> generatePromptIdeas({
@@ -69,16 +72,104 @@ Return ONLY a raw JSON array of strings: ["Prompt 1", "Prompt 2", "Prompt 3", "P
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final rawText = data['candidates']?[0]?['content']?[0]?['parts']?[0]?['text'] ??
-            data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
-        final List<dynamic> parsed = jsonDecode(rawText);
-        return parsed.map((e) => e.toString()).toList();
+        // Gemini response structure: candidates[0].content.parts[0].text
+        final rawText = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+        if (rawText.isNotEmpty) {
+          // Strip markdown code fences if present (Gemini sometimes wraps JSON)
+          final cleaned = rawText
+              .replaceAll(RegExp(r'^```json\s*', multiLine: true), '')
+              .replaceAll(RegExp(r'^```\s*', multiLine: true), '')
+              .trim();
+          final List<dynamic> parsed = jsonDecode(cleaned);
+          return parsed.map((e) => e.toString()).toList();
+        }
+      } else {
+        // Log status for debugging (non-200)
+        debugPrint('Gemini generatePromptIdeas error ${response.statusCode}: ${response.body}');
       }
-    } catch (_) {
-      // Fallback gracefully on network error or quota limits
+    } catch (e) {
+      debugPrint('Gemini generatePromptIdeas exception: $e');
     }
 
     return _mockPromptIdeas(niche);
+  }
+
+  /// Visual reasoning engine that transforms a simple user prompt into an
+  /// exquisitely detailed, commercially compliant prompt for FLUX.1.
+  ///
+  /// Analyzes:
+  /// - Composition & camera perspective (golden ratio, focal length, depth of field)
+  /// - Studio lighting, color temperature, and ambient shadows
+  /// - High-fidelity materials, micro-textures, and anatomically correct subject details
+  /// - Adobe Stock commercial constraints (isolated, clean, no watermarks, no random text)
+  Future<String> enhancePromptWithReasoning({
+    required String rawPrompt,
+    String stylePreset = '3D Isometric',
+    bool forceMock = false,
+  }) async {
+    if (forceMock || apiKey.isEmpty || apiKey.startsWith('MOCK')) {
+      return _mockReasonedPrompt(rawPrompt, stylePreset);
+    }
+
+    try {
+      final url = Uri.parse('$_baseUrl?key=$apiKey');
+      final systemPrompt = '''
+You are an expert AI Visual Art Director and Commercial Stock Photography specialist.
+Analyze the user's input prompt and visual style, then perform deep visual reasoning to craft an exceptionally detailed, high-selling commercial stock prompt optimized for FLUX.1 diffusion models.
+
+Input:
+- Raw prompt: "$rawPrompt"
+- Desired style: "$stylePreset"
+
+Reason through:
+1. Spatial composition, camera framing (e.g. 50mm f/2.8, isometric 30-degree, centered hero subject).
+2. Lighting & color palette (e.g. soft diffused studio light, subtle rim light, warm/cool color harmony, sRGB).
+3. Textures & materials (e.g. glossy ceramics, matte clay, tactile organic fabric, crisp edges).
+4. Subject expression & posture (natural, commercially appealing).
+5. Clean stock background (isolated subject or harmonious background, clean negative space).
+6. Strict commercial rules: absolutely no text, no gibberish letters, no logos, no watermarks.
+
+Output ONLY a single cohesive descriptive English prompt paragraph without quotes, bullet points, or markdown.
+''';
+
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': systemPrompt}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.6,
+            'maxOutputTokens': 250,
+          },
+        }),
+      ).timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final rawText =
+            data['candidates']?[0]?['content']?['parts']?[0]?['text'] as String?;
+        if (rawText != null && rawText.trim().isNotEmpty) {
+          return rawText.trim();
+        }
+      }
+    } catch (e) {
+      debugPrint('Gemini enhancePromptWithReasoning exception: $e');
+    }
+
+    return _mockReasonedPrompt(rawPrompt, stylePreset);
+  }
+
+  String _mockReasonedPrompt(String rawPrompt, String stylePreset) {
+    return '$rawPrompt in $stylePreset style, high commercial stock illustration, '
+        'perfect composition with balanced negative space, soft ambient studio lighting, '
+        'tactile micro-textures, crisp focus, vibrant harmonious colors, sRGB, '
+        'isolated on clean background, commercial grade, no text, no watermarks, no logos';
   }
 
   /// Multimodal vision scan for AI hallucinations, hand deformities, text, and blur
@@ -94,7 +185,7 @@ Return ONLY a raw JSON array of strings: ["Prompt 1", "Prompt 2", "Prompt 3", "P
       final url = Uri.parse('$_baseUrl?key=$apiKey');
       final base64Image = base64Encode(imageBytes);
 
-      final prompt = '''
+      const prompt = '''
 Inspect this image for Adobe Stock Contributor compliance:
 1. Hands & Anatomy: are there extra fingers, mangled limbs, or unnatural deformities? (Score 0-100)
 2. Watermarks: is there any fake watermark, signature, camera timestamp, or brand logo?
@@ -136,20 +227,29 @@ Return JSON strictly in this structure:
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        // Correct path: candidates[0].content.parts[0].text
         final raw = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
-        final map = jsonDecode(raw);
-        return DefectReport(
-          passed: map['passed'] ?? true,
-          anatomyIntegrityScore: map['anatomyIntegrityScore'] ?? 95,
-          isWatermarkFree: map['isWatermarkFree'] ?? true,
-          isFocusSharp: map['isFocusSharp'] ?? true,
-          isColorProfileSrgb: map['isColorProfileSrgb'] ?? true,
-          detectedIssues: List<String>.from(map['detectedIssues'] ?? []),
-          actionableTips: List<String>.from(map['actionableTips'] ?? []),
-        );
+        if (raw.isNotEmpty) {
+          final cleaned = raw
+              .replaceAll(RegExp(r'^```json\s*', multiLine: true), '')
+              .replaceAll(RegExp(r'^```\s*', multiLine: true), '')
+              .trim();
+          final map = jsonDecode(cleaned);
+          return DefectReport(
+            passed: map['passed'] ?? true,
+            anatomyIntegrityScore: (map['anatomyIntegrityScore'] as num?)?.toInt() ?? 95,
+            isWatermarkFree: map['isWatermarkFree'] ?? true,
+            isFocusSharp: map['isFocusSharp'] ?? true,
+            isColorProfileSrgb: map['isColorProfileSrgb'] ?? true,
+            detectedIssues: List<String>.from(map['detectedIssues'] ?? []),
+            actionableTips: List<String>.from(map['actionableTips'] ?? []),
+          );
+        }
+      } else {
+        debugPrint('Gemini inspectDefects error ${response.statusCode}: ${response.body}');
       }
-    } catch (_) {
-      // Fallback
+    } catch (e) {
+      debugPrint('Gemini inspectDefects exception: $e');
     }
 
     return DefectReport.perfect();
@@ -205,26 +305,38 @@ Return JSON in this structure:
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        // Correct path: candidates[0].content.parts[0].text
         final raw = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
-        final map = jsonDecode(raw);
+        if (raw.isNotEmpty) {
+          final cleaned = raw
+              .replaceAll(RegExp(r'^```json\s*', multiLine: true), '')
+              .replaceAll(RegExp(r'^```\s*', multiLine: true), '')
+              .trim();
+          final map = jsonDecode(cleaned);
 
-        String category = map['category'] ?? matchedCategory;
-        if (!AdobeCategories.isValid(category)) {
-          category = matchedCategory;
+          String category = (map['category'] ?? matchedCategory).toString();
+          if (!AdobeCategories.isValid(category)) {
+            category = matchedCategory;
+          }
+
+          final List<dynamic> rawKeywords = map['keywords'] ?? [];
+          final keywords = rawKeywords
+              .map((k) => k.toString().toLowerCase().trim())
+              .where((k) => k.isNotEmpty)
+              .toList();
+
+          return GeneratedMetadata(
+            title: map['title']?.toString() ?? _generateFallbackTitle(prompt),
+            category: category,
+            keywords: keywords.isNotEmpty ? keywords : _generateFallbackKeywords(prompt),
+            description: map['description']?.toString() ?? map['title']?.toString() ?? prompt,
+          );
         }
-
-        final List<dynamic> rawKeywords = map['keywords'] ?? [];
-        final keywords = rawKeywords.map((k) => k.toString().toLowerCase().trim()).where((k) => k.isNotEmpty).toList();
-
-        return GeneratedMetadata(
-          title: map['title'] ?? _generateFallbackTitle(prompt),
-          category: category,
-          keywords: keywords.isNotEmpty ? keywords : _generateFallbackKeywords(prompt),
-          description: map['description'] ?? map['title'] ?? prompt,
-        );
+      } else {
+        debugPrint('Gemini generateMetadata error ${response.statusCode}: ${response.body}');
       }
-    } catch (_) {
-      // Fallback
+    } catch (e) {
+      debugPrint('Gemini generateMetadata exception: $e');
     }
 
     return _mockMetadata(prompt, matchedCategory);

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:microstock_tools/features/generator/models/image_provider_type.dart';
 import 'package:microstock_tools/features/generator/services/gemini_service.dart';
 import 'package:microstock_tools/features/generator/services/imagen_service.dart';
 
@@ -48,9 +49,12 @@ void main() {
   });
 
   group('ImagenService', () {
-    final imagen = ImagenService(apiKey: 'MOCK_API_KEY');
+    test('generateImage creates JPEG bytes in mock mode for Gemini', () async {
+      final imagen = ImagenService(
+        apiKey: 'MOCK_API_KEY',
+        provider: ImageProviderType.gemini,
+      );
 
-    test('generateImage creates JPEG bytes in mock mode', () async {
       final bytes = await imagen.generateImage(
         prompt: 'High resolution vector icon of a golden trophy',
         forceMock: true,
@@ -59,6 +63,41 @@ void main() {
       expect(bytes, isNotNull);
       expect(bytes.length, greaterThan(100));
       // Valid JPEG header
+      expect(bytes[0], 0xFF);
+      expect(bytes[1], 0xD8);
+    });
+
+    test('generateImage routes to Pollinations provider', () async {
+      final imagen = ImagenService(
+        apiKey: '',
+        provider: ImageProviderType.pollinations,
+      );
+
+      final bytes = await imagen.generateImage(
+        prompt: 'Isometric bakery',
+        forceMock: true,
+      );
+
+      expect(bytes, isNotNull);
+      expect(bytes.length, greaterThan(100));
+      expect(bytes[0], 0xFF);
+      expect(bytes[1], 0xD8);
+    });
+
+    test('generateImage routes to Hugging Face provider', () async {
+      final imagen = ImagenService(
+        apiKey: '',
+        hfToken: 'hf_test_token',
+        provider: ImageProviderType.huggingFace,
+      );
+
+      final bytes = await imagen.generateImage(
+        prompt: 'Minimalist vector apple',
+        forceMock: true,
+      );
+
+      expect(bytes, isNotNull);
+      expect(bytes.length, greaterThan(100));
       expect(bytes[0], 0xFF);
       expect(bytes[1], 0xD8);
     });

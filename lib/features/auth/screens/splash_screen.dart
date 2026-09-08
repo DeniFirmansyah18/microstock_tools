@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_decorations.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../trends/screens/home_trends_screen.dart';
 import 'welcome_screen.dart';
 
 /// Screen 1: Minimalist Splash Screen matching the Wabi design reference
@@ -40,18 +43,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _animController.forward();
 
     if (widget.autoNavigate) {
-      Future.delayed(const Duration(milliseconds: 2000), () {
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              pageBuilder: (_, __, ___) => const WelcomeScreen(),
-              transitionsBuilder: (_, animation, __, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 500),
-            ),
-          );
-        }
+      // Wait long enough for AuthProvider to restore credentials from
+      // FlutterSecureStorage before we decide where to navigate.
+      Future.delayed(const Duration(milliseconds: 2200), () {
+        if (!mounted) return;
+        final auth = context.read<AuthProvider>();
+        final destination = auth.isLoggedIn
+            ? const HomeTrendsScreen()
+            : const WelcomeScreen();
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => destination,
+            transitionsBuilder: (_, animation, __, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 500),
+          ),
+        );
       });
     }
   }

@@ -10,6 +10,11 @@ class TrendItem {
   final String iconType;
   final int accentColorHex;
 
+  /// Maps this trend to a specific style preset chip in PromptStudioScreen.
+  /// Must match one of: '3D Isometric', 'Clay Style', 'Artisan Food',
+  /// 'Clean Vector', 'Paper Cutout', 'Cinematic Studio'.
+  final String? stylePreset;
+
   const TrendItem({
     required this.id,
     required this.title,
@@ -20,5 +25,6 @@ class TrendItem {
     required this.recommendedPrompt,
     this.iconType = 'sphere',
     this.accentColorHex = 0xFF2563EB,
+    this.stylePreset,
   });
 }

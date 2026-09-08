@@ -19,7 +19,7 @@ void main() {
       () async {
         // 1. Authenticate user
         final auth = AuthProvider(isTesting: true);
-        await auth.signInWithGoogle(name: 'Top Stock Contributor');
+        await auth.signInWithGoogle(); // isTesting mode uses built-in mock data
         await auth.setGeminiApiKey('AIzaSyMockKeyForVerification', isPro: true);
 
         expect(auth.isLoggedIn, isTrue);

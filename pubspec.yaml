@@ -16,6 +16,8 @@ dependencies:
   path_provider: ^2.1.4
   share_plus: ^10.0.2
   provider: ^6.1.2
+  google_sign_in: ^6.2.1
+  image_gallery_saver_plus: ^5.1.1
 
 dev_dependencies:
   flutter_test:

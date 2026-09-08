@@ -12,6 +12,7 @@ class TrendRepository {
       recommendedPrompt: 'Cute 3D isometric clay habit tracking cards on a clean white background, soft ambient shadows, minimalist aesthetic, commercial stock illustration',
       iconType: 'avatar',
       accentColorHex: 0xFFF59E0B,
+      stylePreset: 'Clay Style',
     ),
     const TrendItem(
       id: 'trend_step_counter',
@@ -23,6 +24,7 @@ class TrendRepository {
       recommendedPrompt: '3D colorful isometric mosaic step counter tiles, vibrant red and green gradient cubes, clean product UI presentation, soft lighting',
       iconType: 'grid',
       accentColorHex: 0xFFEF4444,
+      stylePreset: '3D Isometric',
     ),
     const TrendItem(
       id: 'trend_talk_to_books',
@@ -34,6 +36,7 @@ class TrendRepository {
       recommendedPrompt: 'Glossy 3D holographic dark blue sphere with subtle internal neural light reflections, modern AI concept art, studio lighting on pure white background',
       iconType: 'sphere',
       accentColorHex: 0xFF2563EB,
+      stylePreset: '3D Isometric',
     ),
     const TrendItem(
       id: 'trend_baking_inspiration',
@@ -45,6 +48,7 @@ class TrendRepository {
       recommendedPrompt: 'Delicious artisanal chocolate cupcake on a ceramic white pedestal covered by a vintage glass cloche stand, warm natural side lighting, sharp focus, stock photography quality',
       iconType: 'food',
       accentColorHex: 0xFFD97706,
+      stylePreset: 'Artisan Food',
     ),
     const TrendItem(
       id: 'trend_clean_meal_planner',
@@ -56,6 +60,7 @@ class TrendRepository {
       recommendedPrompt: 'Stylized 3D glossy red apple with fresh green leaf, minimalist meal prep recipe icon, studio lighting, crisp shadows, commercial vector 3d style',
       iconType: 'apple',
       accentColorHex: 0xFF10B981,
+      stylePreset: 'Clean Vector',
     ),
     const TrendItem(
       id: 'trend_isometric_smart_city',
@@ -67,6 +72,7 @@ class TrendRepository {
       recommendedPrompt: 'High-detail 3D isometric green smart city with solar panels, electric vehicles, and vertical gardens, bright morning daylight, clean stock vector aesthetic',
       iconType: 'grid',
       accentColorHex: 0xFF059669,
+      stylePreset: '3D Isometric',
     ),
   ];
 

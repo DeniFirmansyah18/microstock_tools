@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/adobe_categories.dart';
 import '../../../core/theme/app_colors.dart';
@@ -150,13 +151,39 @@ class _ReviewLabScreenState extends State<ReviewLabScreen> {
         description: widget.prompt,
       );
 
+      // Save to device gallery
+      final fileName = 'stockcraft_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final result = await ImageGallerySaverPlus.saveImage(
+        readyBytes,
+        quality: 95,
+        name: fileName,
+      );
+
       if (mounted) {
         setState(() => _isExporting = false);
-        _showSuccessExportDialog(readyBytes);
+        final saved = result['isSuccess'] == true || result['filePath'] != null;
+        if (saved) {
+          _showSuccessExportDialog(readyBytes);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Gagal menyimpan ke galeri. Periksa izin penyimpanan.'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isExporting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export gagal: ${e.toString()}'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -195,7 +222,7 @@ class _ReviewLabScreenState extends State<ReviewLabScreen> {
           children: [
             const Icon(Icons.check_circle_rounded, color: AppColors.accentGreen, size: 28),
             const SizedBox(width: 10),
-            Text('Ready for Adobe Stock!', style: AppTypography.cardTitle),
+            Text('Tersimpan di Galeri!', style: AppTypography.cardTitle),
           ],
         ),
         content: Column(
@@ -203,7 +230,7 @@ class _ReviewLabScreenState extends State<ReviewLabScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your JPEG contains binary IPTC Core & XMP tags. When uploaded to contributor.stock.adobe.com, title and tags will pre-fill automatically.',
+              'JPEG dengan IPTC Core & XMP metadata tersimpan ke galeri perangkat. Upload langsung ke contributor.stock.adobe.com — title & tag akan terisi otomatis.',
               style: AppTypography.body,
             ),
             const SizedBox(height: 12),
@@ -216,11 +243,11 @@ class _ReviewLabScreenState extends State<ReviewLabScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('• Resolution: ${_imageWidth}x$_imageHeight px (${validation.megapixels.toStringAsFixed(1)} MP)', style: AppTypography.caption),
-                  Text('• File Size: ${validation.fileSizeMB.toStringAsFixed(1)} MB (Limit: 45 MB)', style: AppTypography.caption),
+                  Text('• Resolusi: ${_imageWidth}x$_imageHeight px (${validation.megapixels.toStringAsFixed(1)} MP)', style: AppTypography.caption),
+                  Text('• Ukuran File: ${validation.fileSizeMB.toStringAsFixed(1)} MB (Maks: 45 MB)', style: AppTypography.caption),
                   Text('• Color Space: sRGB JPEG (Compliant)', style: AppTypography.caption),
-                  Text('• Category: $_selectedCategory', style: AppTypography.caption),
-                  Text('• Tags Embedded: ${_keywords.length} keywords', style: AppTypography.caption),
+                  Text('• Kategori: $_selectedCategory', style: AppTypography.caption),
+                  Text('• Keywords: ${_keywords.length} tag terinjeksi', style: AppTypography.caption),
                 ],
               ),
             ),

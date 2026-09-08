@@ -16,14 +16,12 @@ void main() {
     });
 
     test('loginWithGoogle updates profile and sets user as logged in', () async {
-      await auth.signInWithGoogle(
-        name: 'Alex Contributor',
-        email: 'alex@microstock.io',
-      );
+      // In isTesting mode, signInWithGoogle uses built-in mock data.
+      await auth.signInWithGoogle();
 
       expect(auth.isLoggedIn, isTrue);
-      expect(auth.user?.displayName, 'Alex Contributor');
-      expect(auth.user?.email, 'alex@microstock.io');
+      expect(auth.user?.displayName, 'Test Contributor');
+      expect(auth.user?.email, 'test@stockcraft.io');
     });
 
     test('setting API key detects Free vs Pro tier', () async {
